@@ -1,66 +1,151 @@
-# Twitter Lite — Fullstack Clone Project
+Chirp - fullstack social media app
+====================================
 
-This is a fullstack mini Twitter clone built using React for the frontend and Flask for the backend. It supports user login, signup, tweeting, user search, tweet search, and following users (with logical constraints like preventing self-follow).
+A Twitter-style social media clone built with a React frontend and a Flask plus SQLite backend. Designed as a learning project that covers authentication, timelines, social features, comments and privacy controls.
 
-## Stack Used
+Main features
+-------------
 
-- Frontend: React (vanilla, no framework)
-- Backend: Python (Flask + SQLite)
-- Styling: Basic inline CSS for now
-- JSON data: Scraped tweet datasets loaded through scripts
+1. Accounts and authentication
 
----
+- Sign up with a username and password.
+- Passwords are stored as SHA-256 hashes in SQLite.
+- Login and logout endpoints on the backend.
+- The frontend persists the session in local storage so you stay signed in across page refreshes.
 
-## Features
+2. Tweets and timeline
 
-- User login & signup with password hashing
-- Prevent duplicate usernames and incorrect login attempts
-- Post tweets, view all tweets (reverse chronological order)
-- Search tweets by content
-- Search users by username
-- Follow/unfollow users (cannot follow yourself)
-- Auto-load tweets from JSON 
-- dummy password for scraped users: "twitter_scraped"
-- Modular design — frontend/backend separation
+- Post short text updates (up to 280 characters).
+- Home feed shows top-level tweets in reverse chronological order.
+- Each tweet card shows the author avatar, username, content, timestamp, like count and reply count.
+- Like, unlike and save tweets directly from the feed.
+- Clicking the author name navigates to their profile.
 
----
+3. Comments and replies
 
-## How to Run
+- Click any tweet to open a detailed modal view.
+- The modal shows full tweet info: author (clickable), bio, content, timestamp, like and reply counts, and like/save actions.
+- Reply to any tweet from the modal. Replies are stored as posts with a `parent_id` linking them to the parent tweet.
+- Each reply shows author (clickable), content and timestamp.
+- Reply counts are visible on every tweet card in the feed.
 
-### Backend
+4. Search
+
+- Search tweets by text content.
+- Search people by username.
+- Live dropdown under the top search bar shows matching posts and users as you type.
+- Pressing Enter opens full search results in the feed area.
+
+5. Profiles
+
+- Dedicated profile page per user with avatar, bio and tabbed content.
+- Tabs: Tweets, Likes, Saved, Followers, Following.
+- Followers and Following tabs show user lists with avatars and bios. Click any user to visit their profile.
+- Profile editing for your own account: update bio and avatar URL.
+- Privacy settings control who can see your tweets, followers, following and liked tweets.
+
+6. Followers and following
+
+- Follow and unfollow other accounts from their profile page or from search results.
+- Backend stores relationships in a followers table keyed by numeric user ids.
+- Follower and following counts are shown on profile tab labels.
+
+7. Likes and saved tweets
+
+- Backend tracks likes and saved tweets in separate tables.
+- Profile Likes tab shows tweets a user has liked (respects the show-likes privacy setting).
+- Profile Saved tab is visible only to the account owner.
+
+Technology stack
+----------------
+
+- Frontend
+  - React (Create React App).
+  - CSS variables with light and dark theme support.
+  - Responsive layout with toast notifications, modals and live search.
+  - Local state and local storage for session persistence.
+
+- Backend
+  - Python 3 and Flask with debug auto-reload.
+  - SQLite database (`twitter.db`) in the backend folder.
+  - Flask-CORS for local development (`localhost:3000` to `127.0.0.1:5000`).
+
+Running the project
+-------------------
+
+1. Backend
 
 ```bash
 cd backend
 python3 -m venv venv
 source venv/bin/activate   # or venv\Scripts\activate on Windows
-pip install flask flask-cors
-python init_db.py          # Creates database schema
-python load_json.py        # Loads tweets into DB
-python main.py             # Launches backend on http://127.0.0.1:5000
+pip install -r requirements.txt
 
+# First time: create schema and run migrations
+python3 init_db.py
+python3 migrate_db.py
+python3 migrate_likes_saves_privacy.py
+python3 migrate_comments.py
 
-Frontend Setup
-In the frontend/ directory, this is a plain React project. You can use something like create-react-app, vite, or any bundler — but if you're just running it manually:
+# Seed demo data
+python3 seed_dummy_data.py
 
+# Start the server
+python3 main.py    # serves on http://127.0.0.1:5000
+```
+
+2. Frontend
+
+```bash
 cd frontend
 npm install
-npm start
-That will run the frontend on http://localhost:3000 and connect to the Flask backend on http://127.0.0.1:5000.
+npm start    # serves on http://localhost:3000
+```
 
+Run both servers in separate terminals. The React app talks to the Flask backend at `http://127.0.0.1:5000`.
 
-Challenges & Fixes
+Seeding and resetting data
+--------------------------
 
-1. User auth logic confusion
-Initially, the login and signup logic were combined on the backend. This made it difficult to distinguish between valid logins and attempts to signup with existing usernames. I fixed this by separating the login/signup buttons and handling their conditions individually.
+- `seed_dummy_data.py` adds several demo users with short bios and a set of human-sounding tweets. All demo accounts use the password `demo123`.
+- `reset_and_seed.py` clears users, posts and followers and re-seeds from scratch:
 
-2. CORS & HTTP 500 issues
-I encountered CORS errors and 500 server errors due to mismatched headers and unhandled exceptions. Fixed by:
+```bash
+cd backend
+python3 reset_and_seed.py
+python3 migrate_comments.py   # re-add columns after reset if needed
+```
 
-Adding explicit error handling and CORS headers
-Using OPTIONS response validation to troubleshoot preflight issues
-3. Database schema mismatches
-Early on, I got errors like no column named password or user_id missing in posts. These were due to stale or incorrectly initialized databases. I fixed this by explicitly running DROP TABLE IF EXISTS statements in init_db.py before creating tables again.
+After resetting, restart `python3 main.py` so the backend picks up the refreshed database.
 
-4. Broken tweet loading
-The load_json.py script threw NOT NULL constraint failed because of missing password handling and a missing hashlib import. Adding dummy passwords for scraped users and importing hashlib fixed this.
+API overview
+------------
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/signup` | Create account |
+| POST | `/login` | Log in |
+| GET | `/posts` | List top-level tweets (excludes replies) |
+| POST | `/posts` | Create a tweet or reply (`parent_id` for replies) |
+| GET | `/posts/<id>` | Single tweet detail with comment count |
+| DELETE | `/posts/<id>` | Delete own tweet |
+| GET | `/posts/<id>/comments` | List replies for a tweet |
+| POST | `/posts/<id>/like` | Like a tweet |
+| DELETE | `/posts/<id>/like` | Unlike |
+| POST | `/posts/<id>/save` | Save a tweet |
+| DELETE | `/posts/<id>/save` | Unsave |
+| GET | `/search/tweets?q=` | Search tweets |
+| GET | `/search/users?q=` | Search users |
+| GET | `/profile/<username>` | User profile |
+| PUT | `/profile/<username>` | Update bio / avatar |
+| GET | `/profile/<username>/tweets` | User tweets (privacy-aware) |
+| GET | `/profile/<username>/likes` | Liked tweets |
+| GET | `/profile/<username>/saved` | Saved tweets (owner only) |
+| GET | `/profile/<username>/followers` | Follower list |
+| GET | `/profile/<username>/following` | Following list |
+| GET | `/profile/<username>/settings` | Privacy settings (owner only) |
+| PUT | `/profile/<username>/settings` | Update privacy settings |
+| POST | `/follow` | Follow a user |
+| DELETE | `/follow` | Unfollow |
+| GET | `/follow/check` | Check if following |
 

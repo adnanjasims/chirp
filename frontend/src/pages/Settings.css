@@ -1,0 +1,101 @@
+.settings-page {
+  padding: 1.5rem 0 3rem;
+}
+
+.settings-container {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.settings-header {
+  margin-bottom: 1.5rem;
+}
+
+.settings-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0;
+  color: var(--text-primary);
+}
+
+.settings-message,
+.settings-loading {
+  color: var(--text-muted);
+  margin: 1rem 0;
+}
+
+.settings-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.settings-card__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  color: var(--text-primary);
+}
+
+.settings-card__desc {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 1.25rem;
+}
+
+.settings-field {
+  margin-bottom: 1.25rem;
+}
+
+.settings-field--row {
+  margin-bottom: 0.75rem;
+}
+
+.settings-field__label {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.35rem;
+}
+
+.settings-field__label--flex {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.settings-field__label--flex input {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.settings-field__select {
+  width: 100%;
+  max-width: 280px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+
+.settings-field__select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.settings-field__hint {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0;
+}
+
+.settings-card .btn--primary {
+  margin-top: 0.5rem;
+}

@@ -1,0 +1,254 @@
+.tweet-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.tweet-modal--rich {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.tweet-modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  z-index: 1;
+}
+
+.tweet-modal__close:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+/* Main tweet section */
+.tweet-modal__main {
+  padding: 1.5rem 1.5rem 1rem;
+}
+
+.tweet-modal__author--clickable {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+.tweet-modal__author--clickable:hover .tweet-modal__username {
+  text-decoration: underline;
+  color: var(--accent);
+}
+
+.tweet-modal__author-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tweet-modal__username {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tweet-modal__bio {
+  margin: 0.2rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.tweet-modal__content {
+  font-size: 1.125rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 0.75rem;
+}
+
+.tweet-modal__meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.tweet-modal__time {
+  color: var(--text-secondary);
+}
+
+.tweet-modal__stat {
+  color: var(--text-secondary);
+}
+
+/* Actions */
+.tweet-modal__actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0 0;
+}
+
+.tweet-modal__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.tweet-modal__action:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.tweet-modal__action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.tweet-modal__action--liked {
+  color: #f91880;
+  border-color: #f91880;
+}
+
+.tweet-modal__action--liked:hover:not(:disabled) {
+  color: #f91880;
+  background: rgba(249, 24, 128, 0.08);
+}
+
+.tweet-modal__action--saved {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.tweet-modal__action-icon {
+  font-size: 1rem;
+}
+
+/* Comments section */
+.tweet-modal__comments {
+  padding: 0 1.5rem 1.25rem;
+}
+
+.tweet-modal__comments-heading {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: var(--text-primary);
+}
+
+.tweet-modal__comment-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tweet-modal__comment-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.tweet-modal__comment-input:focus {
+  border-color: var(--accent);
+}
+
+.tweet-modal__no-comments {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.tweet-modal__comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tweet-modal__comment {
+  padding: 0.625rem 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.tweet-modal__comment-author {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  margin-bottom: 0.25rem;
+}
+
+.tweet-modal__comment-author:hover .tweet-modal__comment-username {
+  text-decoration: underline;
+  color: var(--accent);
+}
+
+.tweet-modal__comment-username {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tweet-modal__comment-text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tweet-modal__comment-time {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}

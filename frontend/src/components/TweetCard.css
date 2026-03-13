@@ -1,0 +1,128 @@
+.tweet-card--with-actions {
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+.tweet-card--with-actions:hover {
+  background: var(--bg-secondary);
+}
+
+.tweet-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.tweet-card__author--clickable {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.tweet-card__author--clickable:hover .tweet-card__username {
+  text-decoration: underline;
+  color: var(--accent);
+}
+
+.tweet-card__username {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.tweet-card__top-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.tweet-card__time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.tweet-card__delete {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  color: var(--error-text);
+  background: var(--error-bg);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.tweet-card__delete:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.tweet-card__content {
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 0.5rem;
+}
+
+.tweet-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.25rem;
+}
+
+.tweet-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.tweet-card__action:hover:not(:disabled) {
+  color: var(--accent);
+  background: var(--accent-muted);
+}
+
+.tweet-card__action:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.tweet-card__action--like.tweet-card__action--active,
+.tweet-card__action--like:hover:not(:disabled) {
+  color: #f91880;
+}
+
+.tweet-card__action--comment:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.tweet-card__action--save.tweet-card__action--active {
+  color: var(--accent);
+}
+
+.tweet-card__action-icon {
+  font-size: 1rem;
+}
+
+.tweet-card__action-count {
+  font-weight: 500;
+}

@@ -1,0 +1,237 @@
+.feed-page {
+  padding: 1.5rem 0 3rem;
+}
+
+.feed-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.feed-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.feed-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  color: var(--text-primary);
+}
+
+.feed-compose {
+  padding: 1.25rem;
+}
+
+.feed-compose__user {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.5rem;
+}
+
+.compose-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.compose-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  resize: vertical;
+  min-height: 80px;
+}
+
+.compose-input::placeholder {
+  color: var(--text-muted);
+}
+
+.compose-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.search-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.feed-list {
+  margin-top: 1rem;
+}
+
+.feed-list__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 0.5rem;
+}
+
+.tweet-card,
+.tweet-card--with-actions {
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.feed-list .tweet-card--with-actions:last-child {
+  border-bottom: none;
+}
+
+.tweet-card:last-child {
+  border-bottom: none;
+}
+
+.tweet-card--clickable {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.875rem 0;
+  font: inherit;
+}
+
+.tweet-card--clickable:hover {
+  background: var(--bg-secondary);
+  margin: 0 -1.25rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  border-radius: var(--radius-sm);
+}
+
+.tweet-card__author {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.tweet-card__username {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.tweet-card__content {
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.feed-search-results__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.feed-search-results .link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+
+.feed-search-results .link-btn:hover {
+  text-decoration: underline;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.user-row__link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  min-width: 0;
+}
+
+.user-row__link:hover .user-row__name {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.user-row:last-child {
+  border-bottom: none;
+}
+
+.user-row__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-row__name {
+  font-weight: 600;
+  display: block;
+}
+
+.user-row__bio {
+  margin: 0.2rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.feed-error {
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--error-bg);
+  color: var(--error-text);
+  font-size: 0.9375rem;
+}
+
+.feed-loading,
+.feed-empty {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  margin: 0.5rem 0 0;
+}
