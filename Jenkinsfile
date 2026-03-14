@@ -4,14 +4,13 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                // Pulls the latest code directly from your GitHub repository
+                // Pulls latest code from github
                 checkout scm
             }
         }
         
         stage('Build Backend Container') {
             steps {
-                // Navigates to the backend folder and builds the Docker image
                 dir('backend') {
                     sh 'docker build -t twitter-backend:latest .'
                 }
@@ -20,7 +19,6 @@ pipeline {
         
         stage('Build Frontend Container') {
             steps {
-                // Navigates to the frontend folder and builds the Docker image
                 dir('frontend') {
                     sh 'docker build -t twitter-frontend:latest .'
                 }
@@ -29,14 +27,16 @@ pipeline {
         
         stage('DevSecOps Vulnerability Scan') {
             steps {
-                // This is where we will add Trivy to scan for CVEs (Sun Life requirement)
                 echo 'Executing security scan on Docker images...'
+                // runs trivy security scanner on backend
+                sh 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --severity HIGH,CRITICAL --exit-code 0 twitter-backend:latest'
+                // runs trivy security scanner on frontend
+                sh 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --severity HIGH,CRITICAL --exit-code 0 twitter-frontend:latest'
             }
         }
         
         stage('Publish Artifacts') {
             steps {
-                // This is where we will push the images to Artifactory (Sun Life requirement)
                 echo 'Pushing verified, secure images to artifact repository...'
             }
         }
