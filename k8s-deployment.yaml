@@ -1,0 +1,74 @@
+# backend deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: twitter-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: twitter-backend
+  template:
+    metadata:
+      labels:
+        app: twitter-backend
+    spec:
+      containers:
+      - name: backend
+        image: twitter-backend:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+
+---
+# backend service for internal network
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: twitter-backend
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+
+---
+# frontend deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: twitter-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: twitter-frontend
+  template:
+    metadata:
+      labels:
+        app: twitter-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: twitter-frontend:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+
+---
+# frontend service exposed to browser
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  type: NodePort
+  selector:
+    app: twitter-frontend
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+    nodePort: 30000
