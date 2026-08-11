@@ -3,7 +3,7 @@ import Avatar from '../components/Avatar';
 import TweetCard from '../components/TweetCard';
 import './Profile.css';
 
-const API = 'http://127.0.0.1:5000';
+import { API, apiFetch } from '../api';
 
 function Profile({
   profileUsername,
@@ -11,7 +11,9 @@ function Profile({
   onBack,
   onGoToProfile,
   onGoToSettings,
+  onGoToCollections,
   onSelectPost,
+  onHashtag,
   showToast,
 }) {
   const [profile, setProfile] = useState(null);
@@ -42,7 +44,7 @@ function Profile({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API}/profile/${encodeURIComponent(profileUsername)}`);
+      const res = await apiFetch(`/profile/${encodeURIComponent(profileUsername)}`);
       if (!res.ok) {
         if (res.status === 404) setError('User not found');
         else setError('Could not load profile');
@@ -66,7 +68,7 @@ function Profile({
     if (!profileUsername && !profile?.username) return;
     try {
       const viewerParam = `viewer=${encodeURIComponent(viewer)}`;
-      const res = await fetch(`${API}/posts?${viewerParam}`);
+      const res = await apiFetch(`/posts?${viewerParam}`);
       const data = await (res.ok ? res.json() : []);
       const usernameToUse = (profile?.username || profileUsername || '').trim();
       const filtered = Array.isArray(data)
@@ -81,7 +83,7 @@ function Profile({
   const fetchLikes = useCallback(async () => {
     if (!profileUsername) return;
     try {
-      const res = await fetch(`${API}/profile/${encodeURIComponent(profileUsername)}/likes?viewer=${encodeURIComponent(viewer)}`);
+      const res = await apiFetch(`/profile/${encodeURIComponent(profileUsername)}/likes?viewer=${encodeURIComponent(viewer)}`);
       if (!res.ok) { setLikes([]); return; }
       const data = await res.json();
       setLikes(Array.isArray(data) ? data : []);
@@ -93,7 +95,7 @@ function Profile({
   const fetchSaved = useCallback(async () => {
     if (!profileUsername || !isOwnProfile) return;
     try {
-      const res = await fetch(`${API}/profile/${encodeURIComponent(profileUsername)}/saved?viewer=${encodeURIComponent(viewer)}`);
+      const res = await apiFetch(`/profile/${encodeURIComponent(profileUsername)}/saved?viewer=${encodeURIComponent(viewer)}`);
       if (!res.ok) return;
       const data = await res.json();
       setSaved(Array.isArray(data) ? data : []);
@@ -108,7 +110,7 @@ function Profile({
     setFollowersLoading(true);
     setFollowersError(null);
     try {
-      const res = await fetch(`${API}/profile/${encodeURIComponent(target)}/followers?viewer=${encodeURIComponent(viewer)}`);
+      const res = await apiFetch(`/profile/${encodeURIComponent(target)}/followers?viewer=${encodeURIComponent(viewer)}`);
       if (!res.ok) { setFollowers([]); return; }
       const data = await res.json();
       setFollowers(Array.isArray(data) ? data : []);
@@ -126,7 +128,7 @@ function Profile({
     setFollowingLoading(true);
     setFollowingError(null);
     try {
-      const res = await fetch(`${API}/profile/${encodeURIComponent(target)}/following?viewer=${encodeURIComponent(viewer)}`);
+      const res = await apiFetch(`/profile/${encodeURIComponent(target)}/following?viewer=${encodeURIComponent(viewer)}`);
       if (!res.ok) { setFollowing([]); return; }
       const data = await res.json();
       setFollowing(Array.isArray(data) ? data : []);
@@ -162,13 +164,13 @@ function Profile({
       try {
         let myId = loggedInUser.id;
         if (myId == null) {
-          const meRes = await fetch(`${API}/profile/${encodeURIComponent(loggedInUser.username)}`);
+          const meRes = await apiFetch(`/profile/${encodeURIComponent(loggedInUser.username)}`);
           if (!meRes.ok) return;
           const meData = await meRes.json();
           myId = meData.id;
         }
         if (myId == null || cancelled) return;
-        const res = await fetch(`${API}/follow/check?follower_id=${myId}&followee_id=${profile.id}`);
+        const res = await apiFetch(`/follow/check?follower_id=${myId}&followee_id=${profile.id}`);
         const data = await res.json();
         if (!cancelled) setFollowingThisUser(!!data.following);
       } catch {
@@ -180,18 +182,9 @@ function Profile({
 
   const handleFollow = async () => {
     if (!loggedInUser || !profile || isOwnProfile) return;
-    let myId = loggedInUser.id;
-    if (myId == null) {
-      const meRes = await fetch(`${API}/profile/${encodeURIComponent(loggedInUser.username)}`);
-      if (!meRes.ok) return;
-      const meData = await meRes.json();
-      myId = meData.id;
-    }
-    if (myId == null) return;
-    const res = await fetch(`${API}/follow`, {
+    const res = await apiFetch('/follow', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ follower_id: myId, followee_id: profile.id }),
+      body: JSON.stringify({ followee_id: profile.id }),
     });
     if (res.ok) {
       setFollowingThisUser(true);
@@ -205,18 +198,9 @@ function Profile({
 
   const handleUnfollow = async () => {
     if (!loggedInUser || !profile || isOwnProfile) return;
-    let myId = loggedInUser.id;
-    if (myId == null) {
-      const meRes = await fetch(`${API}/profile/${encodeURIComponent(loggedInUser.username)}`);
-      if (!meRes.ok) return;
-      const meData = await meRes.json();
-      myId = meData.id;
-    }
-    if (myId == null) return;
-    const res = await fetch(`${API}/follow`, {
+    const res = await apiFetch('/follow', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ follower_id: myId, followee_id: profile.id }),
+      body: JSON.stringify({ followee_id: profile.id }),
     });
     if (res.ok) {
       setFollowingThisUser(false);
@@ -229,7 +213,7 @@ function Profile({
     if (!loggedInUser || !isOwnProfile) return;
     setSavingProfile(true);
     try {
-      const res = await fetch(`${API}/profile/${encodeURIComponent(profileUsername)}`, {
+      const res = await apiFetch(`/profile/${encodeURIComponent(profileUsername)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -253,7 +237,7 @@ function Profile({
 
   const handleDeleteTweet = async (postId) => {
     if (!loggedInUser || !isOwnProfile) return;
-    const res = await fetch(`${API}/posts/${postId}`, {
+    const res = await apiFetch(`/posts/${postId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: loggedInUser.username }),
@@ -329,6 +313,9 @@ function Profile({
                     <button type="button" className="btn btn--secondary btn--sm" onClick={() => setEditMode(true)}>
                       Edit profile
                     </button>
+                    <button type="button" className="btn btn--secondary btn--sm" onClick={onGoToCollections}>
+                      Collections
+                    </button>
                     <button type="button" className="btn btn--secondary btn--sm" onClick={onGoToSettings}>
                       Settings
                     </button>
@@ -345,6 +332,36 @@ function Profile({
                         Follow
                       </button>
                     )}
+                    <button
+                      type="button"
+                      className="btn btn--secondary btn--sm"
+                      onClick={async () => {
+                        await apiFetch(`/mute`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ username: loggedInUser.username, target_username: profile.username }),
+                        });
+                        showToast?.('success', `Muted @${profile.username}`);
+                      }}
+                    >
+                      Mute
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--secondary btn--sm"
+                      onClick={async () => {
+                        if (!window.confirm(`Block @${profile.username}?`)) return;
+                        await apiFetch(`/block`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ username: loggedInUser.username, target_username: profile.username }),
+                        });
+                        showToast?.('success', `Blocked @${profile.username}`);
+                        onBack?.();
+                      }}
+                    >
+                      Block
+                    </button>
                   </div>
                 )}
               </>
@@ -459,6 +476,8 @@ function Profile({
                     onSaveChange={refreshTweets}
                     onDelete={isOwnProfile ? handleDeleteTweet : null}
                     onGoToProfile={onGoToProfile}
+                    onHashtag={onHashtag}
+                    showToast={showToast}
                   />
                 ))
               )}

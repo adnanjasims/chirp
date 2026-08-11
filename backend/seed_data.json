@@ -1,0 +1,92 @@
+{
+  "password": "demo123",
+  "users": [
+    {
+      "username": "alex_r",
+      "bio": "Coffee addict. Sometimes I tweet.",
+      "avatar_seed": "alex"
+    },
+    {
+      "username": "jordan_lee",
+      "bio": "Designer. Dog dad. Bad at mornings.",
+      "avatar_seed": "jordan"
+    },
+    {
+      "username": "sam_writes",
+      "bio": "Writing a book maybe. Mostly procrastinating.",
+      "avatar_seed": "sam"
+    },
+    {
+      "username": "morgan_",
+      "bio": "just here for the memes tbh",
+      "avatar_seed": "morgan"
+    },
+    {
+      "username": "casey",
+      "bio": "engineer. they/them. hot takes are cold takes by now",
+      "avatar_seed": "casey"
+    },
+    {
+      "username": "riley",
+      "bio": "music and cats. thats the whole personality",
+      "avatar_seed": "riley"
+    },
+    {
+      "username": "quinn",
+      "bio": "idk what to put here",
+      "avatar_seed": "quinn"
+    }
+  ],
+  "tweets": [
+    {"username": "alex_r", "content": "wait did anyone else's power just flicker or is it just me"},
+    {"username": "alex_r", "content": "need coffee. like. now. it's not even 9am and I've given up"},
+    {"username": "alex_r", "content": "the amount of times I've refreshed this app today... not great"},
+    {"username": "alex_r", "content": "cant believe its already wednesday where did the week go"},
+    {"username": "alex_r", "content": "anyone else just stare at the ceiling sometimes. just me ok"},
+    {"username": "alex_r", "content": "shipping #chirp features and hoping nothing explodes"},
+    {"username": "jordan_lee", "content": "that meeting could have been a slack message"},
+    {"username": "jordan_lee", "content": "my dog looked at me and sighed. I feel judged"},
+    {"username": "jordan_lee", "content": "someone tell me its gonna be ok (it's monday)"},
+    {"username": "jordan_lee", "content": "that feeling when you fix something and have no idea why it worked"},
+    {"username": "jordan_lee", "content": "my sleep schedule is a suggestion at this point"},
+    {"username": "jordan_lee", "content": "design tip: if everything is bold, nothing is bold #design"},
+    {"username": "sam_writes", "content": "finally figured out that bug. only took 4 hours and 3 coffees"},
+    {"username": "sam_writes", "content": "writing is hard. why do words"},
+    {"username": "sam_writes", "content": "i have so many tabs open my browser is judging me"},
+    {"username": "sam_writes", "content": "re-reading my old messages and cringing. normal tuesday"},
+    {"username": "sam_writes", "content": "chapter three is fighting me today"},
+    {"username": "morgan_", "content": "ok but why is the wifi always slow when you actually need it"},
+    {"username": "morgan_", "content": "saw a really good meme earlier and now I cant find it. pain"},
+    {"username": "morgan_", "content": "no thoughts. head empty. just vibes"},
+    {"username": "morgan_", "content": "why do we say 'reply to this tweet' when we could say 'reply to this'... anyway"},
+    {"username": "morgan_", "content": "rate my timeline 1-10 #memes"},
+    {"username": "casey", "content": "hot take: most hot takes are lukewarm at best"},
+    {"username": "casey", "content": "spent 20 mins debugging and it was a typo. never speaking of this again"},
+    {"username": "casey", "content": "tried to be productive. failed. tomorrow maybe"},
+    {"username": "casey", "content": "the bar for 'doing fine' is so low and I'm still tripping over it"},
+    {"username": "casey", "content": "deployed on a friday once. never again #engineering"},
+    {"username": "riley", "content": "this song has been stuck in my head for 3 days send help"},
+    {"username": "riley", "content": "cat just knocked my water over. again. I'm not even mad anymore"},
+    {"username": "riley", "content": "my plants are still alive so thats a win"},
+    {"username": "riley", "content": "listening to the same 5 songs on repeat. no I will not elaborate"},
+    {"username": "riley", "content": "new playlist drop later maybe #music"},
+    {"username": "quinn", "content": "forgot what I was gonna say"},
+    {"username": "quinn", "content": "why is there so much to do. when did I sign up for this"},
+    {"username": "quinn", "content": "sometimes you just need to step away from the screen ya know"},
+    {"username": "quinn", "content": "forgot to reply to someone 2 days ago. its too late now right"},
+    {"username": "quinn", "content": "hello @alex_r hope the coffee situation improved"}
+  ],
+  "follows": [
+    ["alex_r", "jordan_lee"],
+    ["alex_r", "casey"],
+    ["jordan_lee", "sam_writes"],
+    ["jordan_lee", "riley"],
+    ["sam_writes", "alex_r"],
+    ["morgan_", "casey"],
+    ["casey", "alex_r"],
+    ["casey", "jordan_lee"],
+    ["riley", "morgan_"],
+    ["quinn", "alex_r"],
+    ["quinn", "riley"]
+  ]
+}

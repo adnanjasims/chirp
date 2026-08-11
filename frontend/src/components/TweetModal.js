@@ -1,40 +1,41 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Avatar from './Avatar';
+import LinkifiedText from './LinkifiedText';
+import {API, mediaUrl, apiFetch} from '../api';
 import './TweetModal.css';
-
-const API = 'http://127.0.0.1:5000';
 
 function formatTime(iso) {
   if (!iso) return '';
-  const d = new Date(iso + 'Z');
-  const now = new Date();
-  const diffMs = now - d;
-  const diffMin = Math.floor(diffMs / 60000);
+  const d=new Date(iso.endsWith('Z') ? iso : iso + 'Z');
+  const now=new Date();
+  const diffMs=now - d;
+  const diffMin=Math.floor(diffMs / 60000);
   if (diffMin < 1) return 'just now';
   if (diffMin < 60) return `${diffMin}m`;
-  const diffHr = Math.floor(diffMin / 60);
+  const diffHr=Math.floor(diffMin / 60);
   if (diffHr < 24) return `${diffHr}h`;
-  const diffDay = Math.floor(diffHr / 24);
+  const diffDay=Math.floor(diffHr / 24);
   if (diffDay < 7) return `${diffDay}d`;
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-function TweetModal({ post, onClose, loggedInUser, onGoToProfile, showToast }) {
-  const [detail, setDetail] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [commentText, setCommentText] = useState('');
-  const [posting, setPosting] = useState(false);
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const [busy, setBusy] = useState(false);
+function TweetModal({ post, onClose, loggedInUser, onGoToProfile, onHashtag, showToast, typingUsers=[] }) {
+  const [detail,setDetail]=useState(null);
+  const [comments,setComments]=useState([]);
+  const [commentText,setCommentText]=useState('');
+  const [posting,setPosting]=useState(false);
+  const [liked,setLiked]=useState(false);
+  const [saved,setSaved]=useState(false);
+  const [likeCount,setLikeCount]=useState(0);
+  const [busy,setBusy]=useState(false);
+  const typingTimer=useRef(null);
 
-  const viewer = loggedInUser?.username || '';
+  const viewer=loggedInUser?.username || '';
 
   const fetchDetail = useCallback(async () => {
     if (!post?.id) return;
     try {
-      const res = await fetch(`${API}/posts/${post.id}?viewer=${encodeURIComponent(viewer)}`);
+      const res = await apiFetch(`/posts/${post.id}?viewer=${encodeURIComponent(viewer)}`);
       if (!res.ok) return;
       const data = await res.json();
       setDetail(data);
@@ -47,7 +48,7 @@ function TweetModal({ post, onClose, loggedInUser, onGoToProfile, showToast }) {
   const fetchComments = useCallback(async () => {
     if (!post?.id) return;
     try {
-      const res = await fetch(`${API}/posts/${post.id}/comments?viewer=${encodeURIComponent(viewer)}`);
+      const res = await apiFetch(`/posts/${post.id}/comments?viewer=${encodeURIComponent(viewer)}`);
       if (!res.ok) return;
       const data = await res.json();
       setComments(Array.isArray(data) ? data : []);
@@ -59,10 +60,22 @@ function TweetModal({ post, onClose, loggedInUser, onGoToProfile, showToast }) {
     fetchComments();
   }, [fetchDetail, fetchComments]);
 
+  const sendTyping = () => {
+    if (!loggedInUser || !post?.id) return;
+    if (typingTimer.current) return;
+    apiFetch(`/posts/${post.id}/typing`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: loggedInUser.username }),
+    }).catch(() => {});
+    typingTimer.current = setTimeout(() => { typingTimer.current = null; }, 2000);
+  };
+
   if (!post) return null;
 
   const d = detail || post;
   const username = d.username || '';
+  const othersTyping = (typingUsers || []).filter((u) => u !== loggedInUser?.username);
 
   const handleAuthorClick = () => {
     if (onGoToProfile && username) {
@@ -76,7 +89,7 @@ function TweetModal({ post, onClose, loggedInUser, onGoToProfile, showToast }) {
     setBusy(true);
     const method = liked ? 'DELETE' : 'POST';
     try {
-      const res = await fetch(`${API}/posts/${d.id}/like`, {
+      const res = await apiFetch(`/posts/${d.id}/like`, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: loggedInUser.username }),
@@ -95,7 +108,7 @@ function TweetModal({ post, onClose, loggedInUser, onGoToProfile, showToast }) {
     setBusy(true);
     const method = saved ? 'DELETE' : 'POST';
     try {
-      const res = await fetch(`${API}/posts/${d.id}/save`, {
+      const res = await apiFetch(`/posts/${d.id}/save`, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: loggedInUser.username }),
@@ -111,7 +124,7 @@ function TweetModal({ post, onClose, loggedInUser, onGoToProfile, showToast }) {
     if (!commentText.trim() || !loggedInUser || posting) return;
     setPosting(true);
     try {
-      const res = await fetch(`${API}/posts`, {
+      const res = await apiFetch(`/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -131,19 +144,10 @@ function TweetModal({ post, onClose, loggedInUser, onGoToProfile, showToast }) {
     }
   };
 
-  const handleCommentAuthorClick = (uname) => {
-    if (onGoToProfile && uname) {
-      onClose();
-      onGoToProfile(uname);
-    }
-  };
-
   return (
     <div className="tweet-modal-backdrop" onClick={onClose}>
       <div className="tweet-modal tweet-modal--rich" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="tweet-modal__close" onClick={onClose} aria-label="Close">
-          &times;
-        </button>
+        <button type="button" className="tweet-modal__close" onClick={onClose} aria-label="Close">&times;</button>
 
         <div className="tweet-modal__main">
           <button type="button" className="tweet-modal__author tweet-modal__author--clickable" onClick={handleAuthorClick}>
@@ -154,38 +158,48 @@ function TweetModal({ post, onClose, loggedInUser, onGoToProfile, showToast }) {
             </div>
           </button>
 
-          <div className="tweet-modal__content">{d.content}</div>
+          <div className="tweet-modal__content">
+            <LinkifiedText
+              text={d.quote_content || d.content}
+              onMention={(n) => { onClose(); onGoToProfile?.(n); }}
+              onHashtag={(t) => { onClose(); onHashtag?.(t); }}
+            />
+          </div>
+
+          {d.media_url && <img className="tweet-modal__media" src={mediaUrl(d.media_url)} alt="" />}
+
+          {d.original && (
+            <div className="tweet-modal__embed">
+              <div className="tweet-modal__embed-author">@{d.original.username}</div>
+              <div>{d.original.content}</div>
+            </div>
+          )}
 
           <div className="tweet-modal__meta">
             {d.created_at && <span className="tweet-modal__time">{formatTime(d.created_at)}</span>}
-            <span className="tweet-modal__stat">{likeCount} {likeCount === 1 ? 'like' : 'likes'}</span>
-            <span className="tweet-modal__stat">{d.comment_count ?? comments.length} {(d.comment_count ?? comments.length) === 1 ? 'reply' : 'replies'}</span>
+            <span className="tweet-modal__stat">{likeCount} likes</span>
+            <span className="tweet-modal__stat">{d.comment_count ?? comments.length} replies</span>
+            {d.repost_count > 0 && <span className="tweet-modal__stat">{d.repost_count} reposts</span>}
           </div>
 
           <div className="tweet-modal__actions">
-            <button
-              type="button"
-              className={`tweet-modal__action ${liked ? 'tweet-modal__action--liked' : ''}`}
-              onClick={handleLike}
-              disabled={!loggedInUser || busy}
-            >
-              <span className="tweet-modal__action-icon">&#9829;</span> {liked ? 'Liked' : 'Like'}
+            <button type="button" className={`tweet-modal__action ${liked ? 'tweet-modal__action--liked' : ''}`} onClick={handleLike} disabled={!loggedInUser || busy}>
+              &#9829; {liked ? 'Liked' : 'Like'}
             </button>
-            <button
-              type="button"
-              className={`tweet-modal__action ${saved ? 'tweet-modal__action--saved' : ''}`}
-              onClick={handleSave}
-              disabled={!loggedInUser || busy}
-            >
+            <button type="button" className={`tweet-modal__action ${saved ? 'tweet-modal__action--saved' : ''}`} onClick={handleSave} disabled={!loggedInUser || busy}>
               &#128278; {saved ? 'Saved' : 'Save'}
             </button>
           </div>
         </div>
 
         <div className="tweet-modal__comments">
-          <h3 className="tweet-modal__comments-heading">
-            Replies {comments.length > 0 && `(${comments.length})`}
-          </h3>
+          <h3 className="tweet-modal__comments-heading">Replies {comments.length > 0 && `(${comments.length})`}</h3>
+
+          {othersTyping.length > 0 && (
+            <p className="tweet-modal__typing">
+              {othersTyping.join(', ')} {othersTyping.length === 1 ? 'is' : 'are'} replying...
+            </p>
+          )}
 
           {loggedInUser && (
             <form className="tweet-modal__comment-form" onSubmit={handlePostComment}>
@@ -195,14 +209,10 @@ function TweetModal({ post, onClose, loggedInUser, onGoToProfile, showToast }) {
                 className="tweet-modal__comment-input"
                 placeholder="Write a reply..."
                 value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
+                onChange={(e) => { setCommentText(e.target.value); sendTyping(); }}
                 maxLength={280}
               />
-              <button
-                type="submit"
-                className="btn btn--primary btn--sm"
-                disabled={!commentText.trim() || posting}
-              >
+              <button type="submit" className="btn btn--primary btn--sm" disabled={!commentText.trim() || posting}>
                 {posting ? '...' : 'Reply'}
               </button>
             </form>
@@ -217,12 +227,14 @@ function TweetModal({ post, onClose, loggedInUser, onGoToProfile, showToast }) {
                   <button
                     type="button"
                     className="tweet-modal__comment-author"
-                    onClick={() => handleCommentAuthorClick(c.username)}
+                    onClick={() => { onClose(); onGoToProfile?.(c.username); }}
                   >
                     <Avatar username={c.username} avatarUrl={c.avatar_url} size="sm" />
                     <span className="tweet-modal__comment-username">@{c.username || 'unknown'}</span>
                   </button>
-                  <p className="tweet-modal__comment-text">{c.content}</p>
+                  <p className="tweet-modal__comment-text">
+                    <LinkifiedText text={c.content} onMention={(n) => { onClose(); onGoToProfile?.(n); }} onHashtag={(t) => { onClose(); onHashtag?.(t); }} />
+                  </p>
                   {c.created_at && <span className="tweet-modal__comment-time">{formatTime(c.created_at)}</span>}
                 </div>
               ))}

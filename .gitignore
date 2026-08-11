@@ -3,8 +3,13 @@ venv/
 __pycache__/
 *.pyc
 
-# Database
+# Database (local runtime data, not committed)
 *.db
+twitter.db
+backend/twitter.db
+
+# Uploaded media
+backend/uploads/
 
 # Node
 node_modules/

@@ -1,151 +1,222 @@
-Chirp - fullstack social media app
-====================================
+# Chirp
 
-A Twitter-style social media clone built with a React frontend and a Flask plus SQLite backend. Designed as a learning project that covers authentication, timelines, social features, comments and privacy controls.
+Twitter-ish social app. React on the front and Flask + SQLite on the back.
 
-Main features
--------------
+Built as a learning project for SQL and front-end development. Includes a ranked feed, notifications, rooms, drafts, moderation.
 
-1. Accounts and authentication
+## Stack
 
-- Sign up with a username and password.
-- Passwords are stored as SHA-256 hashes in SQLite.
-- Login and logout endpoints on the backend.
-- The frontend persists the session in local storage so you stay signed in across page refreshes.
+- Frontend: React (Create React App), plain CSS with light/dark themes
+- Backend: Python 3, Flask, flask-cors, SQLite (`backend/twitter.db`)
+- Media: files land in `backend/uploads/` and get served at `/uploads/...`
+- Realtime: Server-Sent Events on `/events?username=`
 
-2. Tweets and timeline
+## What it does
 
-- Post short text updates (up to 280 characters).
-- Home feed shows top-level tweets in reverse chronological order.
-- Each tweet card shows the author avatar, username, content, timestamp, like count and reply count.
-- Like, unlike and save tweets directly from the feed.
-- Clicking the author name navigates to their profile.
+**Accounts**
+Signup + login. Passwords are SHA-256 hashed. Session sticks in localStorage (`chirpUser` / `chirpCreds`) so a refresh doesn't kick you out.
 
-3. Comments and replies
+**Feed**
+Two tabs: For You (scored by recency, likes, replies, who you follow, hashtag overlap) and Following. Compose supports images, drafts, and scheduled posts. Scheduled ones flip to published when the feed is fetched and the time is due.
 
-- Click any tweet to open a detailed modal view.
-- The modal shows full tweet info: author (clickable), bio, content, timestamp, like and reply counts, and like/save actions.
-- Reply to any tweet from the modal. Replies are stored as posts with a `parent_id` linking them to the parent tweet.
-- Each reply shows author (clickable), content and timestamp.
-- Reply counts are visible on every tweet card in the feed.
+**Posts**
+Likes, saves, replies, delete your own. Repost or quote. `@mentions` and `#hashtags` get parsed, linked, and searchable. Trending hashtags show up on the home feed.
 
-4. Search
+**Social**
+Follow/unfollow, profiles with tweets/likes/saved/followers/following, privacy knobs (who can see tweets, followers, following, likes).
 
-- Search tweets by text content.
-- Search people by username.
-- Live dropdown under the top search bar shows matching posts and users as you type.
-- Pressing Enter opens full search results in the feed area.
+**Notifications**
+Likes, replies, follows, mentions, reposts, room pings. Unread badge in the nav. Live toasts when you're connected to SSE.
 
-5. Profiles
+**Rooms**
+Short-lived text rooms. Create one, jump in, chat. Host can end it. Rooms expire after a few hours.
 
-- Dedicated profile page per user with avatar, bio and tabbed content.
-- Tabs: Tweets, Likes, Saved, Followers, Following.
-- Followers and Following tabs show user lists with avatars and bios. Click any user to visit their profile.
-- Profile editing for your own account: update bio and avatar URL.
-- Privacy settings control who can see your tweets, followers, following and liked tweets.
+**Moderation** Mute people, block people, mute words, report a post. Blocked/muted posts gets filtered out of feeds.
 
-6. Followers and following
+**Bookmarks**
+Saves can live in collections (default "Saved" plus whatever you create).
 
-- Follow and unfollow other accounts from their profile page or from search results.
-- Backend stores relationships in a followers table keyed by numeric user ids.
-- Follower and following counts are shown on profile tab labels.
+**Insights**
+Rough "your week" view: impressions, likes received, posts, followers, top post.
 
-7. Likes and saved tweets
+**Live bits**
+SSE for feed bumps + notifications. Typing indicator in the reply modal.
 
-- Backend tracks likes and saved tweets in separate tables.
-- Profile Likes tab shows tweets a user has liked (respects the show-likes privacy setting).
-- Profile Saved tab is visible only to the account owner.
+## Project layout
 
-Technology stack
-----------------
+```
+twitterfullstack/
+  backend/
+    main.py              # Flask app + routes
+    helpers.py           # feed scoring, notifs, SSE hub, filters
+    migrate_*.py         # schema migrations
+    seed_dummy_data.py
+    uploads/             # uploaded images (gitignored)
+    twitter.db
+  frontend/
+    src/
+      App.js             # view state machine (no react-router)
+      Navbar.js
+      api.js             # API base URL
+      pages/             # Feed, Profile, Settings, Rooms, etc
+      components/        # TweetCard, TweetModal, ...
+  README.md
+```
 
-- Frontend
-  - React (Create React App).
-  - CSS variables with light and dark theme support.
-  - Responsive layout with toast notifications, modals and live search.
-  - Local state and local storage for session persistence.
+## Run it locally
 
-- Backend
-  - Python 3 and Flask with debug auto-reload.
-  - SQLite database (`twitter.db`) in the backend folder.
-  - Flask-CORS for local development (`localhost:3000` to `127.0.0.1:5000`).
+You need two terminals.
 
-Running the project
--------------------
-
-1. Backend
+### 1) Backend
 
 ```bash
 cd backend
 python3 -m venv venv
-source venv/bin/activate   # or venv\Scripts\activate on Windows
+source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# First time: create schema and run migrations
+# first time only (or after a wipe)
 python3 init_db.py
 python3 migrate_db.py
 python3 migrate_likes_saves_privacy.py
 python3 migrate_comments.py
+python3 migrate_features.py
 
-# Seed demo data
+# optional demo users/tweets (password for demos: demo123)
 python3 seed_dummy_data.py
 
-# Start the server
-python3 main.py    # serves on http://127.0.0.1:5000
+python3 main.py                 # http://127.0.0.1:5000
 ```
 
-2. Frontend
+`main.py` will try to run `migrate_features.py` on boot too
+
+### 2) Frontend
 
 ```bash
 cd frontend
 npm install
-npm start    # serves on http://localhost:3000
+npm start                       # http://localhost:3000
 ```
 
-Run both servers in separate terminals. The React app talks to the Flask backend at `http://127.0.0.1:5000`.
+Frontend talks to `http://127.0.0.1:5000`. CORS is open for local use.
 
-Seeding and resetting data
---------------------------
-
-- `seed_dummy_data.py` adds several demo users with short bios and a set of human-sounding tweets. All demo accounts use the password `demo123`.
-- `reset_and_seed.py` clears users, posts and followers and re-seeds from scratch:
+## Seeding / reset
 
 ```bash
 cd backend
+source venv/bin/activate
 python3 reset_and_seed.py
-python3 migrate_comments.py   # re-add columns after reset if needed
+# if columns look missing after a hard reset, re-run the migrate_*.py scripts
+python3 migrate_comments.py
+python3 migrate_features.py
 ```
 
-After resetting, restart `python3 main.py` so the backend picks up the refreshed database.
+Then restart `python3 main.py`.
 
-API overview
-------------
+### Auth + media
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/signup` | Create account |
-| POST | `/login` | Log in |
-| GET | `/posts` | List top-level tweets (excludes replies) |
-| POST | `/posts` | Create a tweet or reply (`parent_id` for replies) |
-| GET | `/posts/<id>` | Single tweet detail with comment count |
-| DELETE | `/posts/<id>` | Delete own tweet |
-| GET | `/posts/<id>/comments` | List replies for a tweet |
-| POST | `/posts/<id>/like` | Like a tweet |
-| DELETE | `/posts/<id>/like` | Unlike |
-| POST | `/posts/<id>/save` | Save a tweet |
-| DELETE | `/posts/<id>/save` | Unsave |
-| GET | `/search/tweets?q=` | Search tweets |
-| GET | `/search/users?q=` | Search users |
-| GET | `/profile/<username>` | User profile |
-| PUT | `/profile/<username>` | Update bio / avatar |
-| GET | `/profile/<username>/tweets` | User tweets (privacy-aware) |
-| GET | `/profile/<username>/likes` | Liked tweets |
-| GET | `/profile/<username>/saved` | Saved tweets (owner only) |
-| GET | `/profile/<username>/followers` | Follower list |
-| GET | `/profile/<username>/following` | Following list |
-| GET | `/profile/<username>/settings` | Privacy settings (owner only) |
-| PUT | `/profile/<username>/settings` | Update privacy settings |
-| POST | `/follow` | Follow a user |
-| DELETE | `/follow` | Unfollow |
-| GET | `/follow/check` | Check if following |
 
+|                       |                                    |
+| --------------------- | ---------------------------------- |
+| `POST /signup`        | Create account                     |
+| `POST /login`         | Log in                             |
+| `POST /upload`        | Multipart image, returns `{ url }` |
+| `GET /uploads/<file>` | Serve an upload                    |
+
+
+### Posts + feed
+
+
+|                                             |                                                                            |
+| ------------------------------------------- | -------------------------------------------------------------------------- |
+| `GET /posts?feed=for_you|following&viewer=` | Home feed                                                                  |
+| `POST /posts`                               | Create (content, username, parent_id?, media_url?, status?, scheduled_at?) |
+| `PUT /posts/<id>`                           | Edit / publish a draft                                                     |
+| `GET /posts/<id>`                           | One post                                                                   |
+| `DELETE /posts/<id>`                        | Delete yours                                                               |
+| `GET /posts/<id>/comments`                  | Replies                                                                    |
+| `POST /posts/<id>/repost`                   | Repost or quote (`quote`)                                                  |
+| `POST/GET /posts/<id>/typing`               | Typing ping                                                                |
+| `POST/DELETE /posts/<id>/like`              | Like / unlike                                                              |
+| `POST/DELETE /posts/<id>/save`              | Save / unsave                                                              |
+| `GET /drafts?username=`                     | Drafts + scheduled                                                         |
+
+
+### Search + tags
+
+
+|                          |                 |
+| ------------------------ | --------------- |
+| `GET /search/tweets?q=`  | Search posts    |
+| `GET /search/users?q=`   | Search people   |
+| `GET /hashtags/trending` | Hot tags        |
+| `GET /hashtags/<tag>`    | Posts for a tag |
+
+
+### People + privacy
+
+
+|                                        |                    |
+| -------------------------------------- | ------------------ |
+| `GET/PUT /profile/<username>`          | Profile            |
+| `GET /profile/<username>/tweets`       | Their tweets       |
+| `GET /profile/<username>/likes`        | Likes              |
+| `GET /profile/<username>/saved`        | Saves (owner only) |
+| `GET /profile/<username>/followers`    | Followers          |
+| `GET /profile/<username>/following`    | Following          |
+| `GET/PUT /profile/<username>/settings` | Privacy settings   |
+| `POST/DELETE /follow`                  | Follow / unfollow  |
+| `GET /follow/check`                    | Are they following |
+
+
+### Notifications + moderation
+
+
+|                                |                      |
+| ------------------------------ | -------------------- |
+| `GET /notifications?username=` | Inbox + unread count |
+| `POST /notifications/read`     | Mark read            |
+| `POST/DELETE /block`           | Block / unblock      |
+| `GET /block/list`              | Blocked list         |
+| `POST/DELETE /mute`            | Mute / unmute        |
+| `GET /mute/list`               | Muted list           |
+| `GET/POST/DELETE /muted-words` | Muted words          |
+| `POST /reports`                | Report a post        |
+
+
+### Collections + rooms + extras
+
+
+|                                           |                                    |
+| ----------------------------------------- | ---------------------------------- |
+| `GET/POST /collections`                   | List / create                      |
+| `DELETE /collections/<id>`                | Delete (not the default Saved one) |
+| `GET/POST/DELETE /collections/<id>/items` | Items in a collection              |
+| `GET/POST /rooms`                         | List / create live rooms           |
+| `GET /rooms/<id>`                         | Room + members                     |
+| `POST /rooms/<id>/join` `leave` `end`     | Membership                         |
+| `GET/POST /rooms/<id>/messages`           | Chat                               |
+| `GET /insights?username=`                 | Your week stats                    |
+| `GET /events?username=`                   | SSE stream                         |
+
+
+## Notes
+
+- Frontend can still be static-hosted later; just point `frontend/src/api.js` at wherever the API lives.
+- If feed looks empty after a reset, you probably need migrations + seed again.
+
+With the backend running:
+
+```bash
+curl -s -X POST http://127.0.0.1:5000/signup \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"smoke","password":"demo123"}'
+
+curl -s -X POST http://127.0.0.1:5000/posts \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"smoke","content":"hello #chirp"}'
+
+curl -s 'http://127.0.0.1:5000/posts?feed=for_you&viewer=smoke' | head
+```
+
+Then open `http://localhost:3000`, log in, and poke around: For You tab, Alerts, Rooms, Drafts, Saved, Insights.

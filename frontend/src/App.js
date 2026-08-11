@@ -6,90 +6,179 @@ import Signup from './pages/Signup';
 import Feed from './pages/Feed';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import Notifications from './pages/Notifications';
+import Rooms from './pages/Rooms';
+import Hashtag from './pages/Hashtag';
+import Insights from './pages/Insights';
+import Drafts from './pages/Drafts';
+import Collections from './pages/Collections';
 import TweetModal from './components/TweetModal';
 import UserModal from './components/UserModal';
+import { API, apiFetch, setToken, setStoredUser, getStoredUser, getToken, clearAuth, eventsUrl } from './api';
 import './App.css';
+import './pages/FeaturePages.css';
 
-const API = 'http://127.0.0.1:5000';
-const LIVE_SEARCH_DEBOUNCE_MS = 300;
-const LIVE_SEARCH_LIMIT = 5;
+const LIVE_SEARCH_DEBOUNCE_MS=300;
+const LIVE_SEARCH_LIMIT=5;
+const THEME_KEY='chirpTheme';
+
+function readStoredDarkMode() {
+  try {
+    const v=localStorage.getItem(THEME_KEY);
+    if (v === 'dark') return true;
+    if (v === 'light') return false;
+  } catch { /* ignore */ }
+  return false;
+}
 
 function App() {
-  const [view, setView] = useState('landing'); // 'landing' | 'login' | 'signup' | 'feed' | 'profile' | 'settings'
-  const [profileUsername, setProfileUsername] = useState(null);
-  const [posts, setPosts] = useState([]);
-  const [newPost, setNewPost] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [userResults, setUserResults] = useState([]);
-  const [liveSearchTweets, setLiveSearchTweets] = useState([]);
-  const [liveSearchUsers, setLiveSearchUsers] = useState([]);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const liveSearchRef = useRef(0);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [loggedInUser, setLoggedInUser] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
-  const [postsError, setPostsError] = useState(null);
-  const [postsLoading, setPostsLoading] = useState(true);
-  const [toasts, setToasts] = useState([]);
-  const [authMessage, setAuthMessage] = useState(null);
+  const [view,setView]=useState('landing');
+  const [profileUsername,setProfileUsername]=useState(null);
+  const [hashtag,setHashtag]=useState(null);
+  const [roomId,setRoomId]=useState(null);
+  const [posts,setPosts]=useState([]);
+  const [newPost,setNewPost]=useState('');
+  const [feedTab,setFeedTab]=useState('for_you');
+  const [trending,setTrending]=useState([]);
+  const [searchQuery,setSearchQuery]=useState('');
+  const [searchResults,setSearchResults]=useState([]);
+  const [userResults,setUserResults]=useState([]);
+  const [liveSearchTweets,setLiveSearchTweets]=useState([]);
+  const [liveSearchUsers,setLiveSearchUsers]=useState([]);
+  const [selectedPost,setSelectedPost]=useState(null);
+  const [selectedUser,setSelectedUser]=useState(null);
+  const liveSearchRef=useRef(0);
+  const [username,setUsername]=useState('');
+  const [password,setPassword]=useState('');
+  const [loggedInUser,setLoggedInUser]=useState(null);
+  const [darkMode,setDarkMode]=useState(readStoredDarkMode);
+  const [postsError,setPostsError]=useState(null);
+  const [postsLoading,setPostsLoading]=useState(true);
+  const [toasts,setToasts]=useState([]);
+  const [authMessage,setAuthMessage]=useState(null);
+  const [unreadCount,setUnreadCount]=useState(0);
+  const [typingByPost,setTypingByPost]=useState({});
 
-  const showToast = useCallback((type, text) => {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, type, text }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
+  const showToast=useCallback((type, text)=>{
+    const id=Date.now()+Math.random();
+    setToasts((prev)=>[...prev, { id, type, text }]);
+    setTimeout(()=>{
+      setToasts((prev)=>prev.filter((t)=>t.id !== id));
     }, 4000);
   }, []);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     setPostsLoading(true);
     setPostsError(null);
-    const viewer = loggedInUser?.username ? `?viewer=${encodeURIComponent(loggedInUser.username)}` : '';
+    const params = new URLSearchParams();
+    params.set('feed', feedTab);
     try {
-      const res = await fetch(`${API}/posts${viewer}`);
+      const res = await apiFetch(`/posts?${params}`);
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      const data = await res.json();
-      setPosts(data);
+      setPosts(await res.json());
     } catch (err) {
       setPostsError(err.message || 'Could not load posts. Is the backend running?');
       setPosts([]);
     } finally {
       setPostsLoading(false);
     }
-  };
+  }, [feedTab]);
 
-  // Restore session and credentials from localStorage
-  useEffect(() => {
+  const fetchTrending = useCallback(async () => {
     try {
-      const storedUser = localStorage.getItem('chirpUser');
-      const storedCreds = localStorage.getItem('chirpCreds');
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        if (parsed && parsed.username) {
-          setLoggedInUser(parsed);
+      const res = await apiFetch('/hashtags/trending');
+      if (res.ok) setTrending(await res.json());
+    } catch { /* ignore */ }
+  }, []);
+
+  const fetchUnread = useCallback(async () => {
+    if (!loggedInUser?.username || !getToken()) {
+      setUnreadCount(0);
+      return;
+    }
+    try {
+      const res = await apiFetch('/notifications');
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCount(data.unread || 0);
+      }
+    } catch { /* ignore */ }
+  }, [loggedInUser?.username]);
+
+  //restore session from token, not stored passwords
+  useEffect(() => {
+    const boot = async () => {
+      try { localStorage.removeItem('chirpCreds'); } catch { /* old insecure key */ }
+      const token = getToken();
+      const cached = getStoredUser();
+      if (!token) {
+        clearAuth();
+        return;
+      }
+      try {
+        const res = await apiFetch('/me');
+        if (!res.ok) {
+          clearAuth();
+          return;
+        }
+        const data = await res.json();
+        const sessionUser = data.user || cached;
+        setStoredUser(sessionUser);
+        setLoggedInUser(sessionUser);
+        setView('feed');
+      } catch {
+        if (cached?.username) {
+          setLoggedInUser(cached);
           setView('feed');
         }
       }
-      if (storedCreds) {
-        const creds = JSON.parse(storedCreds);
-        if (creds && creds.username) {
-          setUsername(creds.username);
-          setPassword(creds.password || '');
-        }
-      }
-    } catch {
-      // ignore corrupt localStorage
-    }
+    };
+    boot();
   }, []);
 
   useEffect(() => {
-    if (view === 'feed') fetchPosts();
-  }, [view, loggedInUser?.username]);
+    if (view === 'feed') {
+      fetchPosts();
+      fetchTrending();
+    }
+  }, [view, fetchPosts, fetchTrending]);
 
-  // Live search dropdown: debounced fetch as user types
+  useEffect(() => {
+    fetchUnread();
+  }, [fetchUnread, view]);
+
+  //sse keeps the feed/notifs warm
+  useEffect(() => {
+    if (!loggedInUser?.username || !getToken()) return undefined;
+    const es = new EventSource(eventsUrl());
+    es.onmessage = (ev) => {
+      try {
+        const data = JSON.parse(ev.data);
+        if (data.event === 'notification') {
+          setUnreadCount((c) => c + 1);
+          showToast('success', data.message || `${data.actor || 'Someone'} · ${data.type}`);
+        }
+        if (data.event === 'feed' && view === 'feed') {
+          fetchPosts();
+        }
+        if (data.event === 'typing' && data.post_id && data.username) {
+          setTypingByPost((prev) => {
+            const list = new Set(prev[data.post_id] || []);
+            list.add(data.username);
+            return { ...prev, [data.post_id]: Array.from(list) };
+          });
+          setTimeout(() => {
+            setTypingByPost((prev) => {
+              const list = (prev[data.post_id] || []).filter((u) => u !== data.username);
+              return { ...prev, [data.post_id]: list };
+            });
+          }, 5000);
+        }
+      } catch { /* ignore */ }
+    };
+    return () => es.close();
+  }, [loggedInUser?.username, view, fetchPosts, showToast]);
+
   useEffect(() => {
     const q = (searchQuery || '').trim();
     if (!q) {
@@ -101,8 +190,8 @@ function App() {
     const t = setTimeout(async () => {
       try {
         const [tweetsRes, usersRes] = await Promise.all([
-          fetch(`${API}/search/tweets?q=${encodeURIComponent(q)}`),
-          fetch(`${API}/search/users?q=${encodeURIComponent(q)}`),
+          apiFetch(`/search/tweets?q=${encodeURIComponent(q)}`),
+          apiFetch(`/search/users?q=${encodeURIComponent(q)}`),
         ]);
         const tweets = await tweetsRes.json();
         const users = await usersRes.json();
@@ -125,32 +214,27 @@ function App() {
     let res;
     let data = {};
     try {
-      res = await fetch(`${API}/signup`, {
+      res = await apiFetch('/signup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: user, password: pass }),
       });
-      try {
-        data = await res.json();
-      } catch {
-        data = {};
-      }
+      try { data = await res.json(); } catch { data = {}; }
     } catch {
       setAuthMessage({ type: 'error', text: 'Could not reach the server. Make sure the backend is running.' });
       return;
     }
     if (res.status === 201) {
+      if (!data.token) {
+        setAuthMessage({ type: 'error', text: 'Signup worked but no session token came back. Restart the backend.' });
+        return;
+      }
       const userData = data.user || { username: user };
       const sessionUser = { id: userData.id, username: userData.username || user };
+      setToken(data.token);
+      setStoredUser(sessionUser);
       setLoggedInUser(sessionUser);
-      try {
-        localStorage.setItem('chirpUser', JSON.stringify(sessionUser));
-        localStorage.setItem('chirpCreds', JSON.stringify({ username: user, password: pass }));
-      } catch {
-        // ignore storage issues
-      }
       setView('feed');
-      showToast('success', 'Account created. You’re logged in.');
+      showToast('success', "Account created. You're logged in.");
     } else if (res.status === 409) {
       setAuthMessage({ type: 'error', text: 'That username is taken. Try logging in.' });
     } else {
@@ -163,30 +247,25 @@ function App() {
     let res;
     let data = {};
     try {
-      res = await fetch(`${API}/login`, {
+      res = await apiFetch('/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: user, password: pass }),
       });
-      try {
-        data = await res.json();
-      } catch {
-        data = {};
-      }
+      try { data = await res.json(); } catch { data = {}; }
     } catch {
       setAuthMessage({ type: 'error', text: 'Could not reach the server. Make sure the backend is running.' });
       return;
     }
     if (res.status === 200) {
+      if (!data.token) {
+        setAuthMessage({ type: 'error', text: 'Login worked but no session token came back. Restart the backend.' });
+        return;
+      }
       const userData = data.user || { username: user };
       const sessionUser = { id: userData.id, username: userData.username || user };
+      setToken(data.token);
+      setStoredUser(sessionUser);
       setLoggedInUser(sessionUser);
-      try {
-        localStorage.setItem('chirpUser', JSON.stringify(sessionUser));
-        localStorage.setItem('chirpCreds', JSON.stringify({ username: user, password: pass }));
-      } catch {
-        // ignore storage issues
-      }
       setView('feed');
       showToast('success', 'Logged in.');
     } else {
@@ -194,38 +273,61 @@ function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try { await apiFetch('/logout', { method: 'POST', body: '{}' }); } catch { /* ignore */ }
+    clearAuth();
     setLoggedInUser(null);
     setUsername('');
     setPassword('');
     setView('landing');
     showToast('success', 'Logged out.');
-    try {
-      localStorage.removeItem('chirpUser');
-      localStorage.removeItem('chirpCreds');
-    } catch {
-      // ignore
-    }
   };
 
-  const handlePost = async (e) => {
+  const handlePost = async (e, extras = {}) => {
     e.preventDefault();
-    if (!newPost.trim() || !loggedInUser) {
+    if ((!newPost.trim() && !extras.media_url) || !loggedInUser) {
       showToast('error', 'You must be logged in to post.');
       return;
     }
-    const res = await fetch(`${API}/posts`, {
+    const body = {
+      content: newPost,
+      ...extras,
+    };
+    const res = await apiFetch('/posts', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: newPost, username: loggedInUser.username }),
+      body: JSON.stringify(body),
     });
     const data = await res.json();
     if (res.ok) {
       setNewPost('');
-      fetchPosts();
-      showToast('success', 'Posted.');
+      if (extras.status === 'draft' || extras.status === 'scheduled') {
+        showToast('success', extras.status === 'draft' ? 'Draft saved.' : 'Scheduled.');
+      } else {
+        fetchPosts();
+        fetchTrending();
+        showToast('success', 'Posted.');
+      }
     } else {
       showToast('error', data.error || 'Failed to post.');
+    }
+  };
+
+  const handleSaveDraft = async ({ content, media_url }) => {
+    if (!loggedInUser) return;
+    const res = await apiFetch('/posts', {
+      method: 'POST',
+      body: JSON.stringify({
+        content: content || '',
+        media_url,
+        status: 'draft',
+      }),
+    });
+    if (res.ok) {
+      setNewPost('');
+      showToast('success', 'Draft saved.');
+    } else {
+      const data = await res.json();
+      showToast('error', data.error || 'Could not save draft.');
     }
   };
 
@@ -240,13 +342,11 @@ function App() {
     }
     try {
       const [tweetsRes, usersRes] = await Promise.all([
-        fetch(`${API}/search/tweets?q=${encodeURIComponent(q)}`),
-        fetch(`${API}/search/users?q=${encodeURIComponent(q)}`),
+        apiFetch(`/search/tweets?q=${encodeURIComponent(q)}`),
+        apiFetch(`/search/users?q=${encodeURIComponent(q)}`),
       ]);
-      const tweets = await tweetsRes.json();
-      const users = await usersRes.json();
-      setSearchResults(tweets || []);
-      setUserResults(users || []);
+      setSearchResults(await tweetsRes.json() || []);
+      setUserResults(await usersRes.json() || []);
     } catch {
       setSearchResults([]);
       setUserResults([]);
@@ -261,27 +361,15 @@ function App() {
     setLiveSearchUsers([]);
   };
 
-  const handleSelectPost = (post) => {
-    setLiveSearchTweets([]);
-    setLiveSearchUsers([]);
-    setSelectedPost(post);
-  };
-
-  const handleSelectUser = (user) => {
-    setLiveSearchTweets([]);
-    setLiveSearchUsers([]);
-    setSelectedUser(user);
-  };
-
-  const handleGoToProfile = (username) => {
-    setProfileUsername(username || loggedInUser?.username);
+  const handleGoToProfile = (uname) => {
+    setProfileUsername(uname || loggedInUser?.username);
     setView('profile');
     setSelectedUser(null);
   };
 
-  const handleCloseSearchDropdown = () => {
-    setLiveSearchTweets([]);
-    setLiveSearchUsers([]);
+  const handleHashtag = (tag) => {
+    setHashtag(tag);
+    setView('hashtag');
   };
 
   const handleFollow = async (targetId) => {
@@ -289,25 +377,13 @@ function App() {
       showToast('error', 'Log in to follow.');
       return;
     }
-    let followerId = loggedInUser.id;
-    // Fallback: look up the logged-in user by exact username if id is missing
-    if (followerId == null) {
-      const meRes = await fetch(`${API}/profile/${encodeURIComponent(loggedInUser.username)}`);
-      if (!meRes.ok) {
-        showToast('error', 'Could not resolve current user.');
-        return;
-      }
-      const meData = await meRes.json();
-      followerId = meData.id;
-    }
-    if (followerId == null || followerId === targetId) {
+    if (loggedInUser.id != null && loggedInUser.id === targetId) {
       showToast('error', "You can't follow yourself.");
       return;
     }
-    const res = await fetch(`${API}/follow`, {
+    const res = await apiFetch('/follow', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ follower_id: followerId, followee_id: targetId }),
+      body: JSON.stringify({ followee_id: targetId }),
     });
     const data = await res.json();
     if (res.ok) showToast('success', 'Following.');
@@ -316,9 +392,14 @@ function App() {
 
   const toggleDarkMode = () => setDarkMode((d) => !d);
 
+  //apply theme to <html> and remember it for next visit
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+    const theme = darkMode ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem(THEME_KEY, theme); } catch { /* ignore */ }
   }, [darkMode]);
+
+  const showSearch = ['feed', 'profile', 'hashtag', 'notifications', 'rooms', 'insights', 'drafts', 'collections'].includes(view);
 
   return (
     <div className="app-shell">
@@ -329,25 +410,29 @@ function App() {
         onLogout={handleLogout}
         onGoToLogin={() => { setAuthMessage(null); setView('login'); }}
         onGoToSignup={() => { setAuthMessage(null); setView('signup'); }}
-        onGoToHome={() => { setProfileUsername(null); setView(loggedInUser ? 'feed' : 'landing'); }}
+        onGoToHome={() => { setProfileUsername(null); setRoomId(null); setView(loggedInUser ? 'feed' : 'landing'); }}
         onGoToProfile={handleGoToProfile}
         onGoToSettings={() => setView('settings')}
+        onGoToNotifications={() => setView('notifications')}
+        onGoToRooms={() => { setRoomId(null); setView('rooms'); }}
+        onGoToInsights={() => setView('insights')}
+        onGoToDrafts={() => setView('drafts')}
+        onGoToCollections={() => setView('collections')}
+        unreadCount={unreadCount}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onSearch={handleNavbarSearch}
-        showSearch={view === 'feed' || view === 'profile'}
+        showSearch={showSearch}
         liveSearchTweets={liveSearchTweets}
         liveSearchUsers={liveSearchUsers}
-        onSelectPost={handleSelectPost}
-        onSelectUser={handleSelectUser}
-        onCloseSearchDropdown={handleCloseSearchDropdown}
+        onSelectPost={(p) => { setLiveSearchTweets([]); setLiveSearchUsers([]); setSelectedPost(p); }}
+        onSelectUser={(u) => { setLiveSearchTweets([]); setLiveSearchUsers([]); setSelectedUser(u); }}
+        onCloseSearchDropdown={() => { setLiveSearchTweets([]); setLiveSearchUsers([]); }}
       />
 
       <div className="toast-container">
         {toasts.map((t) => (
-          <div key={t.id} className={`toast toast--${t.type}`}>
-            {t.text}
-          </div>
+          <div key={t.id} className={`toast toast--${t.type}`}>{t.text}</div>
         ))}
       </div>
 
@@ -379,6 +464,7 @@ function App() {
           newPost={newPost}
           setNewPost={setNewPost}
           onPost={handlePost}
+          onSaveDraft={handleSaveDraft}
           onRefreshPosts={fetchPosts}
           searchQuery={searchQuery}
           searchResults={searchResults}
@@ -386,10 +472,14 @@ function App() {
           onClearSearch={handleClearSearch}
           onFollow={handleFollow}
           onGoToProfile={handleGoToProfile}
-          onSelectPost={handleSelectPost}
+          onSelectPost={setSelectedPost}
+          onHashtag={handleHashtag}
+          feedTab={feedTab}
+          setFeedTab={setFeedTab}
+          trending={trending}
+          showToast={showToast}
         />
       )}
-
       {view === 'profile' && (
         <Profile
           profileUsername={profileUsername || loggedInUser?.username}
@@ -397,15 +487,65 @@ function App() {
           onBack={() => { setProfileUsername(null); setView('feed'); }}
           onGoToProfile={handleGoToProfile}
           onGoToSettings={() => setView('settings')}
-          onSelectPost={handleSelectPost}
+          onGoToCollections={() => setView('collections')}
+          onSelectPost={setSelectedPost}
+          onHashtag={handleHashtag}
           showToast={showToast}
         />
       )}
-
       {view === 'settings' && (
         <Settings
           loggedInUser={loggedInUser}
           onBack={() => setView(loggedInUser ? 'feed' : 'landing')}
+          showToast={showToast}
+        />
+      )}
+      {view === 'notifications' && loggedInUser && (
+        <Notifications
+          loggedInUser={loggedInUser}
+          onGoToProfile={handleGoToProfile}
+          onSelectPost={setSelectedPost}
+          onGoToRoom={(id) => { setRoomId(id); setView('rooms'); }}
+          showToast={showToast}
+        />
+      )}
+      {view === 'rooms' && loggedInUser && (
+        <Rooms
+          loggedInUser={loggedInUser}
+          roomId={roomId}
+          setRoomId={setRoomId}
+          showToast={showToast}
+        />
+      )}
+      {view === 'hashtag' && (
+        <Hashtag
+          tag={hashtag}
+          loggedInUser={loggedInUser}
+          onBack={() => setView('feed')}
+          onSelectPost={setSelectedPost}
+          onGoToProfile={handleGoToProfile}
+          onHashtag={handleHashtag}
+          showToast={showToast}
+        />
+      )}
+      {view === 'insights' && loggedInUser && (
+        <Insights
+          loggedInUser={loggedInUser}
+          onSelectPost={setSelectedPost}
+          onGoToProfile={handleGoToProfile}
+          onHashtag={handleHashtag}
+          showToast={showToast}
+        />
+      )}
+      {view === 'drafts' && loggedInUser && (
+        <Drafts loggedInUser={loggedInUser} showToast={showToast} onPublished={fetchPosts} />
+      )}
+      {view === 'collections' && loggedInUser && (
+        <Collections
+          loggedInUser={loggedInUser}
+          onSelectPost={setSelectedPost}
+          onGoToProfile={handleGoToProfile}
+          onHashtag={handleHashtag}
           showToast={showToast}
         />
       )}
@@ -416,7 +556,9 @@ function App() {
           onClose={() => setSelectedPost(null)}
           loggedInUser={loggedInUser}
           onGoToProfile={handleGoToProfile}
+          onHashtag={handleHashtag}
           showToast={showToast}
+          typingUsers={typingByPost[selectedPost.id] || []}
         />
       )}
       {selectedUser && (
