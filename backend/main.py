@@ -12,9 +12,14 @@ import auth as Auth
 app=Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
-DB_FILE=os.path.join(os.path.dirname(__file__), 'twitter.db')
-UPLOAD_DIR=os.path.join(os.path.dirname(__file__), 'uploads')
+#DB_FILE / UPLOAD_DIR can point at a Render disk (e.g. /var/data/...)
+_BASE=os.path.dirname(__file__)
+DB_FILE=os.environ.get('DB_FILE') or os.path.join(_BASE, 'twitter.db')
+UPLOAD_DIR=os.environ.get('UPLOAD_DIR') or os.path.join(_BASE, 'uploads')
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+_db_dir=os.path.dirname(DB_FILE)
+if _db_dir:
+    os.makedirs(_db_dir, exist_ok=True)
 ALLOWED_EXT={'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 

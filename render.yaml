@@ -1,0 +1,19 @@
+#Render Blueprint for Chirp API
+#In Render: New → Blueprint → pick adnanjasims/chirp
+services:
+  - type: web
+    name: chirp-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bootstrap_db.py && gunicorn main:app --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: SEED_ON_BOOT
+        value: "1"
+#Note: free plan has no persistent disk — SQLite/uploads reset on redeploy.
+#On a paid plan, add a disk at /var/data and set:
+#  DB_FILE=/var/data/twitter.db
+#  UPLOAD_DIR=/var/data/uploads
