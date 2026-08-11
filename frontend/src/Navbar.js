@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Avatar from './components/Avatar';
+import ChirpMark from './components/ChirpMark';
 import './Navbar.css';
 
 const APP_NAME='Chirp';
@@ -60,7 +61,8 @@ function Navbar({
     <nav className="navbar">
       <div className="navbar__inner">
         <button type="button" className="navbar__logo" onClick={onGoToHome}>
-          {APP_NAME}
+          <ChirpMark size={22} className="navbar__logo-mark" />
+          <span className="navbar__logo-text">{APP_NAME}</span>
         </button>
 
         {loggedInUser ? (
