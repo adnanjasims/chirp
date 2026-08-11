@@ -3,7 +3,7 @@ import Avatar from '../components/Avatar';
 import TweetCard from '../components/TweetCard';
 import './Profile.css';
 
-import { API, apiFetch } from '../api';
+import { apiFetch } from '../api';
 
 function Profile({
   profileUsername,

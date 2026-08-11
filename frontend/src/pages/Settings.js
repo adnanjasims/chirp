@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {API, apiFetch} from '../api';
+import {apiFetch} from '../api';
 import './Settings.css';
 import './FeaturePages.css';
 

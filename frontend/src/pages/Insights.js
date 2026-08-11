@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import TweetCard from '../components/TweetCard';
-import {API, apiFetch} from '../api';
+import {apiFetch} from '../api';
 import './FeaturePages.css';
 
 function Insights({ loggedInUser, onSelectPost, onGoToProfile, onHashtag, showToast }) {

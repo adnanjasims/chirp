@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import Avatar from '../components/Avatar';
 import TweetCard from '../components/TweetCard';
-import {API, mediaUrl, apiFetch} from '../api';
+import {mediaUrl, apiFetch} from '../api';
 import './Feed.css';
 
 function Feed({

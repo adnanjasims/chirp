@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {API, apiFetch} from '../api';
+import {apiFetch} from '../api';
 import './FeaturePages.css';
 
 function Drafts({ loggedInUser, showToast, onPublished }) {

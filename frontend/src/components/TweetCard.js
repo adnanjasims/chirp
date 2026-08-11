@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Avatar from './Avatar';
 import LinkifiedText from './LinkifiedText';
-import {API, mediaUrl, apiFetch} from '../api';
+import {mediaUrl, apiFetch} from '../api';
 import './TweetCard.css';
 
 function formatTime(iso) {

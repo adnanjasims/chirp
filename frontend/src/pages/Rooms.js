@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import {API, apiFetch} from '../api';
+import {apiFetch} from '../api';
 import Avatar from '../components/Avatar';
 import './FeaturePages.css';
 

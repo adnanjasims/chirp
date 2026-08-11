@@ -14,7 +14,7 @@ import Drafts from './pages/Drafts';
 import Collections from './pages/Collections';
 import TweetModal from './components/TweetModal';
 import UserModal from './components/UserModal';
-import { API, apiFetch, setToken, setStoredUser, getStoredUser, getToken, clearAuth, eventsUrl } from './api';
+import { apiFetch, setToken, setStoredUser, getStoredUser, getToken, clearAuth, eventsUrl } from './api';
 import './App.css';
 import './pages/FeaturePages.css';
 
@@ -48,8 +48,6 @@ function App() {
   const [selectedPost,setSelectedPost]=useState(null);
   const [selectedUser,setSelectedUser]=useState(null);
   const liveSearchRef=useRef(0);
-  const [username,setUsername]=useState('');
-  const [password,setPassword]=useState('');
   const [loggedInUser,setLoggedInUser]=useState(null);
   const [darkMode,setDarkMode]=useState(readStoredDarkMode);
   const [postsError,setPostsError]=useState(null);
@@ -277,8 +275,6 @@ function App() {
     try { await apiFetch('/logout', { method: 'POST', body: '{}' }); } catch { /* ignore */ }
     clearAuth();
     setLoggedInUser(null);
-    setUsername('');
-    setPassword('');
     setView('landing');
     showToast('success', 'Logged out.');
   };

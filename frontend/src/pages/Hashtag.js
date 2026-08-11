@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import TweetCard from '../components/TweetCard';
-import {API, apiFetch} from '../api';
+import {apiFetch} from '../api';
 import './FeaturePages.css';
 
 function Hashtag({ tag, loggedInUser, onBack, onSelectPost, onGoToProfile, onHashtag, showToast }) {
